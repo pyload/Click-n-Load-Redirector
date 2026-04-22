@@ -1,8 +1,8 @@
 {
     "description": "Redirect Click'n'Load to remote pyload or jDownloader",
     "manifest_version": 2,
-    "name": "Redirect Click'n'Load",
-    "author": "Ronny Adams",
+    "name": "Click'n'Load Redirector",
+    "author": "pyLoad Team",
     "background": {
         "scripts": [
             "background.js"
@@ -28,5 +28,5 @@
         "webRequestBlocking",
         "storage"
     ],
-    "version": "1.4.1"
+    "version": "1.0.0"
 }
