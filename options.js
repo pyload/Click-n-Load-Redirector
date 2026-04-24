@@ -7,11 +7,12 @@ function save_options() {
 
   chrome.storage.sync.set({ settings:
     {
-      targethost:   document.getElementById('targethost').value,
-      targetport:   document.getElementById('targetport').value,
-      targetproto:  document.getElementById('targetproto').value,
-      targetuser:   document.getElementById('targetuser').value,
-      targetpasswd: document.getElementById('targetpasswd').value
+      targethost:    document.getElementById('targethost').value,
+      targetport:    document.getElementById('targetport').value,
+      targetproto:   document.getElementById('targetproto').value,
+      sethostheader: document.getElementById('sethost').checked,
+      targetuser:    document.getElementById('targetuser').value,
+      targetpasswd:  document.getElementById('targetpasswd').value
     }
   }, function() {
     // Update status to let user know options were saved.
@@ -36,6 +37,7 @@ function restore_options() {
       targethost: '127.0.0.1',
       targetport: '9666',
       targetproto: 'http',
+      sethostheader: true,
       targetuser: "",
       targetpasswd: ""
 
@@ -45,6 +47,7 @@ function restore_options() {
     document.getElementById('targethost').value = storage.settings.targethost;
     document.getElementById('targetport').value = parseInt(storage.settings.targetport);
     document.getElementById('targetproto').value = storage.settings.targetproto;
+    document.getElementById('sethostheader').checked = storage.settings.sethostheader;
     document.getElementById('targetuser').value = storage.settings.targetuser;
     document.getElementById('targetpasswd').value = storage.settings.targetpasswd;
   });

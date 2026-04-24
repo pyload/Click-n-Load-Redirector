@@ -1,14 +1,15 @@
 /**
  * default host value
  */
-var host = "http://127.0.0.1:9666";
-var pause = false;
-var basicAuthHeader = false;
+let host = "http://127.0.0.1:9666";
+let sethost = true
+let pause = false;
+let basicAuthHeader = false;
 
 /**
  * filter settings url
  */
- var filter = {
+let filter = {
     urls: [
         "*://127.0.0.1/*",
         "*://localhost/*"        
@@ -25,6 +26,7 @@ chrome.storage.sync.get({ settings:
     targethost: "127.0.0.1",
     targetport: "9666",
     targetproto: "http",
+    sethostheader: true,
     pause: false,
     targetuser: "",
     targetpasswd: ""
@@ -32,6 +34,7 @@ chrome.storage.sync.get({ settings:
 }, function(storage) {
     host = storage.settings.targetproto + "://" + storage.settings.targethost + ":" + storage.settings.targetport;
     pause = storage.settings.pause;
+    sethost = storage.settings.sethostheader;
         
     //build auth header (must not be used without https)
     if (storage.settings.targetproto == "https" && storage.settings.targetuser.length > 0 && storage.settings.targetpasswd.length > 0 ){
@@ -66,16 +69,30 @@ function checkurl(details){
  * @param {*} details 
  */
  function checkHeader(details){
-    
+    if (pause) return;
+
+    let headers = details.requestHeaders || [];
+
+    if (sethost) {
+        // Remove any existing Host header first
+        headers = headers.filter(header =>
+          header.name.toLowerCase() !== "host"
+        );
+
+        // Add our forced Host header (127.0.0.1:9666)
+        headers.push({
+          name: "Host",
+          value: "127.0.0.1:9666"
+        });
+    }
+
     //if proto==https and authentication is set
     //add basic auth
-    if (basicAuthHeader) {
-        const headers = details.requestHeaders;
+     if (basicAuthHeader) {
         headers.push(basicAuthHeader);
-        return {
-            requestHeaders: headers
-        }
     }
+
+    return { requestHeaders: headers };
 }
 
 
@@ -134,7 +151,7 @@ function enableBrowserAction(){
  */
 function updateState( ){
     
-        if(pause == false){
+        if(pause === false){
             pause = true;
             save_options(pause,function(){
                 disableBrowserAction();
