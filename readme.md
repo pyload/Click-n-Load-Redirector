@@ -32,6 +32,7 @@ Wait until page gets green
   * forked from https://github.com/werty1st/Redirect-Click-n-Load
   * renamed to Click'n'Load Redirector
   * added option to set the Host header to localhost
+  * prevent redirect loop
 
 ## Troubleshooting
 

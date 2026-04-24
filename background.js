@@ -57,12 +57,18 @@ chrome.storage.sync.get({ settings:
  * otherwise return original url
  * @param {*} details 
  */
-function checkurl(details){
-    if ( details.url.match(/^[\S]*:9666\//)  && !pause) {
-        return { redirectUrl: host + details.url.match(/^([\S]*:9666)([\S]*)/)[2] };
-    }
-}
+function checkurl(details) {
+  if (pause) return;
 
+  const match = details.url.match(/^([\S]*:9666)([\S]*)/);
+
+  if (match) {
+    const newUrl = host + match[2];
+    if (details.url !== newUrl) {
+      return { redirectUrl: newUrl };
+    }
+  }
+}
 
 /**
  * Add Basic Auth Header if request is made via https
