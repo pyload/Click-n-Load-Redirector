@@ -10,7 +10,7 @@ function save_options() {
       targethost:    document.getElementById('targethost').value,
       targetport:    document.getElementById('targetport').value,
       targetproto:   document.getElementById('targetproto').value,
-      sethostheader: document.getElementById('sethost').checked,
+      sethostheader: document.getElementById('sethostheader').checked,
       targetuser:    document.getElementById('targetuser').value,
       targetpasswd:  document.getElementById('targetpasswd').value
     }
@@ -24,7 +24,7 @@ function save_options() {
     
     setTimeout(function() {
       status.textContent = '';
-    }, 750);
+    }, 3000);
   });
 }
 

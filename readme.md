@@ -28,11 +28,17 @@ Wait until page gets green
 
 ## Changelog
 
-* 2026-04-22
+### v1.0.0
+  2026-04-22
+
   * forked from https://github.com/werty1st/Redirect-Click-n-Load
   * renamed to Click'n'Load Redirector
   * added option to set the Host header to localhost
   * prevent redirect loop
+
+### v1.0.1
+  2026-06-22
+  * fix incorrect element ID reference that caused setting not to be saved
 
 ## Troubleshooting
 
