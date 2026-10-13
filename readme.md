@@ -7,11 +7,7 @@ Open Options and enter hostname or IP of the machine running pyload
 
 ## Non-https pitfalls
 
-If you use a local IP Address as Target Host you have to allow "mixed-content".
-
-```
-chrome://settings/content/siteDetails?site=https%3A%2F%2Ffilecrypt.co
-```
+If the browser blocks an HTTP target request from an HTTPS source page as mixed content, allow mixed content for that source site in Firefox, or configure an HTTPS target when available.
 
 <img src="./screens/mixed.png" width="480">
 
@@ -39,6 +35,10 @@ Wait until page gets green
 ### v1.0.1
   2026-06-22
   * fix incorrect element ID reference that caused setting not to be saved
+
+### v1.0.2
+  2026-10-13
+  * fixed issue where the target request `Host` header was not correctly rewritten
 
 ## Troubleshooting
 
