@@ -9,13 +9,14 @@ let basicAuthHeader = false;
 /**
  * filter settings url
  */
-let filter = {
+const redirectFilter = {
     urls: [
         "*://127.0.0.1/*",
         "*://localhost/*"        
     ],
     types: ["main_frame", "sub_frame", "script", "object", "xmlhttprequest"]
-}
+};
+let headerFilter;
 
 
 /**
@@ -35,12 +36,15 @@ chrome.storage.sync.get({ settings:
     host = storage.settings.targetproto + "://" + storage.settings.targethost + ":" + storage.settings.targetport;
     pause = storage.settings.pause;
     sethost = storage.settings.sethostheader;
+
+    const targetUrl = new URL(host);
+    headerFilter = {
+        urls: [targetUrl.protocol + "//" + targetUrl.hostname + "/*"],
+        types: redirectFilter.types
+    };
         
     //build auth header (must not be used without https)
     if (storage.settings.targetproto == "https" && storage.settings.targetuser.length > 0 && storage.settings.targetpasswd.length > 0 ){
-        
-        //required for checkHeader function
-        filter.urls.push("*://" + storage.settings.targethost + "/*");
 
         basicAuthHeader = {
             name: "Authorization",
@@ -48,7 +52,7 @@ chrome.storage.sync.get({ settings:
         }
     }
 
-    if (!pause)install_listener();
+    if (!pause)install_listeners();
 });
 
 
@@ -77,6 +81,9 @@ function checkurl(details) {
  function checkHeader(details){
     if (pause) return;
 
+    const requestUrl = new URL(details.url);
+    if (host !== requestUrl.origin) return;
+
     let headers = details.requestHeaders || [];
 
     if (sethost) {
@@ -101,21 +108,18 @@ function checkurl(details) {
     return { requestHeaders: headers };
 }
 
-
-
-
 /**
- * install onBeforeRequestListener after settings are loaded
+ * install onBeforeRequestListener and onBeforeSendHeadersListener after settings are loaded
  */
-function install_listener(){
-    chrome.webRequest.onBeforeRequest.addListener( checkurl, filter, ["blocking"]);
-    chrome.webRequest.onBeforeSendHeaders.addListener( checkHeader, filter, [ "blocking", "requestHeaders"]);
+function install_listeners(){
+    chrome.webRequest.onBeforeRequest.addListener(checkurl, redirectFilter, ["blocking"]);
+    chrome.webRequest.onBeforeSendHeaders.addListener(checkHeader, headerFilter, ["blocking", "requestHeaders"]);
 }
 
 /**
- * if paused remove onBeforeRequestListener
+ * if paused remove onBeforeRequestListener and onBeforeSendHeadersListener
  */
- function remove_listener(){
+ function remove_listeners(){
     chrome.webRequest.onBeforeRequest.removeListener( checkurl );
     chrome.webRequest.onBeforeSendHeaders.removeListener( checkHeader );
 }
@@ -148,7 +152,7 @@ function disableBrowserAction(){
  */
 function enableBrowserAction(){
     chrome.browserAction.setIcon({path:"images/icon_status.png"});
-    install_listener();
+    install_listeners();
 }
 
 /**
