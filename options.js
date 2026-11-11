@@ -11,6 +11,7 @@ function save_options() {
       targetport:    document.getElementById('targetport').value,
       targetproto:   document.getElementById('targetproto').value,
       sethostheader: document.getElementById('sethostheader').checked,
+      bypasscsp:     document.getElementById('bypasscsp').checked,
       targetuser:    document.getElementById('targetuser').value,
       targetpasswd:  document.getElementById('targetpasswd').value
     }
@@ -31,13 +32,13 @@ function save_options() {
 // Restores select box and checkbox state using the preferences
 // stored in chrome.storage.
 function restore_options() {
-  // Use default value color = 'red' and likesColor = true.
   chrome.storage.sync.get({ settings: 
     {
       targethost: '127.0.0.1',
       targetport: '9666',
       targetproto: 'http',
       sethostheader: true,
+      bypasscsp: true,
       targetuser: "",
       targetpasswd: ""
 
@@ -48,6 +49,7 @@ function restore_options() {
     document.getElementById('targetport').value = parseInt(storage.settings.targetport);
     document.getElementById('targetproto').value = storage.settings.targetproto;
     document.getElementById('sethostheader').checked = storage.settings.sethostheader;
+    document.getElementById('bypasscsp').checked = storage.settings.bypasscsp !== undefined ? storage.settings.bypasscsp : true;
     document.getElementById('targetuser').value = storage.settings.targetuser;
     document.getElementById('targetpasswd').value = storage.settings.targetpasswd;
   });

@@ -2,7 +2,9 @@
  * default host value
  */
 let host = "http://127.0.0.1:9666";
-let sethost = true
+let targetOrigin = "http://127.0.0.1:9666";
+let sethost = true;
+let bypasscsp = true;
 let pause = false;
 let basicAuthHeader = false;
 
@@ -18,6 +20,29 @@ const redirectFilter = {
 };
 let headerFilter;
 
+const cspFilter = {
+    urls: ["*://*/*"],
+    types: ["main_frame", "sub_frame"]
+};
+
+const CSP_HEADERS = [
+    "content-security-policy",
+    "content-security-policy-report-only",
+    "x-content-security-policy",
+    "x-webkit-csp"
+];
+
+// Determine extraInfoSpec flags safely across Chrome and Firefox
+const sendHeadersExtraInfoSpec = ["blocking", "requestHeaders"];
+if (chrome.webRequest.OnBeforeSendHeadersOptions && chrome.webRequest.OnBeforeSendHeadersOptions.EXTRA_HEADERS) {
+    sendHeadersExtraInfoSpec.push("extraHeaders");
+}
+
+const responseHeadersExtraInfoSpec = ["blocking", "responseHeaders"];
+if (chrome.webRequest.OnHeadersReceivedOptions && chrome.webRequest.OnHeadersReceivedOptions.EXTRA_HEADERS) {
+    responseHeadersExtraInfoSpec.push("extraHeaders");
+}
+
 
 /**
  * load settings from chrome
@@ -28,6 +53,7 @@ chrome.storage.sync.get({ settings:
     targetport: "9666",
     targetproto: "http",
     sethostheader: true,
+    bypasscsp: true,
     pause: false,
     targetuser: "",
     targetpasswd: ""
@@ -36,8 +62,10 @@ chrome.storage.sync.get({ settings:
     host = storage.settings.targetproto + "://" + storage.settings.targethost + ":" + storage.settings.targetport;
     pause = storage.settings.pause;
     sethost = storage.settings.sethostheader;
+    bypasscsp = storage.settings.bypasscsp !== undefined ? storage.settings.bypasscsp : true;
 
     const targetUrl = new URL(host);
+    targetOrigin = targetUrl.origin;
     headerFilter = {
         urls: [targetUrl.protocol + "//" + targetUrl.hostname + "/*"],
         types: redirectFilter.types
@@ -52,7 +80,7 @@ chrome.storage.sync.get({ settings:
         }
     }
 
-    if (!pause)install_listeners();
+    if (!pause) install_listeners();
 });
 
 
@@ -82,7 +110,7 @@ function checkurl(details) {
     if (pause) return;
 
     const requestUrl = new URL(details.url);
-    if (host !== requestUrl.origin) return;
+    if (targetOrigin !== requestUrl.origin) return;
 
     let headers = details.requestHeaders || [];
 
@@ -109,19 +137,41 @@ function checkurl(details) {
 }
 
 /**
- * install onBeforeRequestListener and onBeforeSendHeadersListener after settings are loaded
+ * Strip Content Security Policy (CSP) headers to allow redirecting Click'n'Load
+ * requests to configured host without CSP violations
+ * @param {*} details 
  */
-function install_listeners(){
-    chrome.webRequest.onBeforeRequest.addListener(checkurl, redirectFilter, ["blocking"]);
-    chrome.webRequest.onBeforeSendHeaders.addListener(checkHeader, headerFilter, ["blocking", "requestHeaders"]);
+function checkResponseHeaders(details) {
+    if (pause || !bypasscsp) return;
+
+    if (!details.responseHeaders) return;
+
+    const requestUrl = new URL(details.url);
+    if (targetOrigin !== requestUrl.origin) return;
+
+    const headers = details.responseHeaders.filter(header =>
+        !CSP_HEADERS.includes(header.name.toLowerCase())
+    );
+
+    return { responseHeaders: headers };
 }
 
 /**
- * if paused remove onBeforeRequestListener and onBeforeSendHeadersListener
+ * install onBeforeRequestListener, onBeforeSendHeadersListener, and onHeadersReceivedListener after settings are loaded
+ */
+function install_listeners(){
+    chrome.webRequest.onBeforeRequest.addListener(checkurl, redirectFilter, ["blocking"]);
+    chrome.webRequest.onBeforeSendHeaders.addListener(checkHeader, headerFilter, sendHeadersExtraInfoSpec);
+    chrome.webRequest.onHeadersReceived.addListener(checkResponseHeaders, cspFilter, responseHeadersExtraInfoSpec);
+}
+
+/**
+ * if paused remove onBeforeRequestListener, onBeforeSendHeadersListener, and onHeadersReceivedListener
  */
  function remove_listeners(){
     chrome.webRequest.onBeforeRequest.removeListener( checkurl );
     chrome.webRequest.onBeforeSendHeaders.removeListener( checkHeader );
+    chrome.webRequest.onHeadersReceived.removeListener( checkResponseHeaders );
 }
 
 
@@ -131,12 +181,12 @@ function install_listeners(){
  */
 // Saves options to chrome.storage.sync.
 function save_options(pause, callback) {
-  chrome.storage.sync.set({
-    pause: pause
-  }, function() {
-    // Update icon status
-    callback();
-  });
+    chrome.storage.sync.set({
+        pause: pause
+    }, function() {
+        // Update icon status
+        callback();
+    });
 }
 
 
@@ -145,7 +195,7 @@ function save_options(pause, callback) {
  */
 function disableBrowserAction(){
     chrome.browserAction.setIcon({path:"images/icon_status_pause.png"});
-    remove_listener();
+    remove_listeners();
 }
 /**
  * set extension icon to normal state
