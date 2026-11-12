@@ -45,6 +45,43 @@ if (chrome.webRequest.OnHeadersReceivedOptions && chrome.webRequest.OnHeadersRec
 
 
 /**
+ * Apply configuration settings and update network listeners
+ * @param {*} settings 
+ */
+function applySettings(settings) {
+    if (!settings) return;
+
+    host = settings.targetproto + "://" + settings.targethost + ":" + settings.targetport;
+    if (settings.pause !== undefined) pause = settings.pause;
+    if (settings.sethostheader !== undefined) sethost = settings.sethostheader;
+    if (settings.bypasscsp !== undefined) bypasscsp = settings.bypasscsp;
+
+    try {
+        const targetUrl = new URL(host);
+        targetOrigin = targetUrl.origin;
+        headerFilter = {
+            urls: [targetUrl.protocol + "//" + targetUrl.hostname + "/*"],
+            types: redirectFilter.types
+        };
+    } catch (e) {
+        console.error("Invalid host URL:", host, e);
+    }
+
+    // Build auth header (must not be used without https)
+    if (settings.targetproto === "https" && settings.targetuser && settings.targetuser.length > 0 && settings.targetpasswd && settings.targetpasswd.length > 0) {
+        basicAuthHeader = {
+            name: "Authorization",
+            value: "Basic " + btoa(settings.targetuser + ":" + settings.targetpasswd)
+        };
+    } else {
+        basicAuthHeader = false;
+    }
+
+    remove_listeners();
+    if (!pause) install_listeners();
+}
+
+/**
  * load settings from chrome
  */
 chrome.storage.sync.get({ settings: 
@@ -59,28 +96,14 @@ chrome.storage.sync.get({ settings:
     targetpasswd: ""
 } 
 }, function(storage) {
-    host = storage.settings.targetproto + "://" + storage.settings.targethost + ":" + storage.settings.targetport;
-    pause = storage.settings.pause;
-    sethost = storage.settings.sethostheader;
-    bypasscsp = storage.settings.bypasscsp !== undefined ? storage.settings.bypasscsp : true;
+    applySettings(storage.settings);
+});
 
-    const targetUrl = new URL(host);
-    targetOrigin = targetUrl.origin;
-    headerFilter = {
-        urls: [targetUrl.protocol + "//" + targetUrl.hostname + "/*"],
-        types: redirectFilter.types
-    };
-        
-    //build auth header (must not be used without https)
-    if (storage.settings.targetproto == "https" && storage.settings.targetuser.length > 0 && storage.settings.targetpasswd.length > 0 ){
-
-        basicAuthHeader = {
-            name: "Authorization",
-            value: "Basic " + btoa( storage.settings.targetuser + ":" +  storage.settings.targetpasswd )        
-        }
+// React immediately to settings changes from options page
+chrome.storage.onChanged.addListener(function(changes, areaName) {
+    if (areaName === "sync" && changes.settings && changes.settings.newValue) {
+        applySettings(changes.settings.newValue);
     }
-
-    if (!pause) install_listeners();
 });
 
 
@@ -161,7 +184,9 @@ function checkResponseHeaders(details) {
  */
 function install_listeners(){
     chrome.webRequest.onBeforeRequest.addListener(checkurl, redirectFilter, ["blocking"]);
-    chrome.webRequest.onBeforeSendHeaders.addListener(checkHeader, headerFilter, sendHeadersExtraInfoSpec);
+    if (headerFilter) {
+        chrome.webRequest.onBeforeSendHeaders.addListener(checkHeader, headerFilter, sendHeadersExtraInfoSpec);
+    }
     chrome.webRequest.onHeadersReceived.addListener(checkResponseHeaders, cspFilter, responseHeadersExtraInfoSpec);
 }
 
@@ -170,7 +195,9 @@ function install_listeners(){
  */
  function remove_listeners(){
     chrome.webRequest.onBeforeRequest.removeListener( checkurl );
-    chrome.webRequest.onBeforeSendHeaders.removeListener( checkHeader );
+    if (headerFilter) {
+        chrome.webRequest.onBeforeSendHeaders.removeListener( checkHeader );
+    }
     chrome.webRequest.onHeadersReceived.removeListener( checkResponseHeaders );
 }
 
@@ -181,12 +208,12 @@ function install_listeners(){
  */
 // Saves options to chrome.storage.sync.
 function save_options(pause, callback) {
-    chrome.storage.sync.set({
-        pause: pause
-    }, function() {
-        // Update icon status
-        callback();
-    });
+  chrome.storage.sync.set({
+    pause: pause
+  }, function() {
+    // Update icon status
+    callback();
+  });
 }
 
 

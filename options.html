@@ -1,79 +1,149 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Options</title>
-  <style>
-    body { padding: 10px;min-height: 450px; min-width: 500px; }
-    #status { display: inline; }
-    input:invalid {
-      border: 2px dashed red;
-    }
-  </style>
+  <meta charset="utf-8">
+  <title>Click'n'Load Redirector Settings</title>
+  <link rel="stylesheet" href="options.css">
 </head>
-
 <body>
-    <h1>Click'n'Load Redirector</h1>
-    
-    <h2>Settings</h2>
-    <table>
-      <tr>
-        <td><label for="targethost"> Target Hostname/IP </label></td>
-        <td><input id="targethost" type="text" placeholder="127.0.0.1"></td>
-      </tr>
-      <tr>
-        <td><label for="targetport"> Target Port</label></td>
-       <td><input id="targetport" type="number" placeholder="9666" min="1" max="65535" ></td>
-      </tr>
-      <tr>
-        <td><label for="targetproto"> Target Protocol</label></td>
-        <td>
-          <select name="proto" id="targetproto" required>
-            <option value="http">http</option>
-            <option value="https">https</option>
-          </select>
-        </td>
-      </tr>
-      <tr>
-        <td><label for="sethostheader"> Set request Host header to "localhost"</label></td>
-        <td><input id="sethostheader" type="checkbox" ></td>
-      </tr>
-      <tr>
-        <td><label for="bypasscsp"> Bypass Content Security Policy (CSP) for redirects</label></td>
-        <td><input id="bypasscsp" type="checkbox" ></td>
-      </tr>
-      <tr>
-        <th colspan="2">Add Authentication Header (only if Protocol is https)</th>
-      </tr>
-      <tr>
-        <td><label for="targetuser"> Username</label></td>
-       <td><input id="targetuser" type="text" placeholder="username" ></td>
-      </tr>
-      <tr>
-        <td><label for="targetpasswd"> Password</label></td>
-       <td><input id="targetpasswd" type="password" placeholder="****" min="8" max="128" ></td>
-      </tr>
-    </table>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <img src="images/icon.png" alt="Logo" class="header-icon">
+        <div class="header-title-wrap">
+          <h1>Click'n'Load Redirector</h1>
+          <p>Redirect download requests to remote pyLoad or JDownloader</p>
+        </div>
+      </div>
+      <span class="version-badge">v1.0.3</span>
+    </header>
 
-    <button id="save">Save</button><div id="status"></div>
+    <!-- Live URL Banner & Connection Test -->
+    <div class="url-preview-banner">
+      <div class="url-preview-content">
+        <span class="url-preview-label">Active Target URL</span>
+        <span class="url-preview-value" id="targetPreview">http://127.0.0.1:9666</span>
+      </div>
+      <button type="button" id="btnTest" class="btn-test" title="Test if target server is reachable">
+        <span id="testIcon">⚡</span>
+        <span id="testText">Test Connection</span>
+      </button>
+    </div>
+    <div id="testResult" class="test-result"></div>
 
-    <h2>How it works</h2>
-        <p>This Extension changes the Hostname/IP of requests to localhost:9666/127.0.0.1:9666.
-            The value you entered above will be set as new Hostname/IP.</p>
-        <p>With this Extension you don't need to setup an SSH Port Forward anymore.</p>
-    
-    <h2>Github</h2> 
-    <p>This Extension is on Github. Issues and Feature Requests can be made there.</p>
-    <a href="https://github.com/pyload/Click-n-Load-Redirector">https://github.com/pyload/Click-n-Load-Redirector</a>
+    <!-- Server Configuration -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Target Server</h2>
+      </div>
+      <p class="card-desc">Specify the hostname/IP, port, and protocol of your remote download manager.</p>
 
-    <h2>Cedits</h2>
-    <p>This is a fork of <a href="https://github.com/werty1st/Redirect-Click-n-Load" >https://github.com/werty1st/Redirect-Click-n-Load</a>, thank you.</p>
-    <p>Starting point was an other very small Extension from rested.io but there is nothing left from their code.</p>
-    <p>Thanks to the Google Chrome Developer portal for the good documentation.</p>
-    <p>I took the JD Logo from the Google Image Search. If somebody wants to make a better one feel free to do it.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="targethost" class="form-label">Hostname or IP Address</label>
+          <input id="targethost" class="input-text" type="text" placeholder="127.0.0.1 or 192.168.1.100" required>
+          <span class="form-hint">Do not include "http://" or port here (pasted URLs are automatically cleaned).</span>
+        </div>
 
+        <div class="form-group">
+          <label for="targetport" class="form-label">Port</label>
+          <input id="targetport" class="input-text" type="number" placeholder="9666" min="1" max="65535" required>
+          <span class="form-hint">Default: 9666</span>
+        </div>
+      </div>
 
+      <div class="form-group">
+        <label for="targetproto" class="form-label">Protocol</label>
+        <select id="targetproto" class="input-select" required>
+          <option value="http">HTTP (Standard unencrypted)</option>
+          <option value="https">HTTPS (Secure TLS / SSL)</option>
+        </select>
+        <span class="form-hint">Use HTTPS if pyLoad or your reverse proxy is configured with an SSL/TLS certificate.</span>
+      </div>
+    </section>
+
+    <!-- Redirection & Security Settings -->
+    <section class="card">
+      <div class="card-header">
+        <h2 class="card-title">Redirection & Security</h2>
+      </div>
+      <p class="card-desc">Configure HTTP headers and security bypass rules for redirected requests.</p>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="sethostheader" class="setting-title">Rewrite Host Header to "localhost"</label>
+          <span class="setting-desc">Replaces the HTTP <code>Host</code> header with <code>127.0.0.1:9666</code>. Required by pyLoad and JDownloader to prevent host validation errors when accessed remotely.</span>
+        </div>
+        <label class="switch">
+          <input id="sethostheader" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-row">
+        <div class="setting-info">
+          <label for="bypasscsp" class="setting-title">Bypass Content Security Policy (CSP)</label>
+          <span class="setting-desc">Strips restrictive CSP headers from web pages to prevent browsers from blocking redirected requests to your configured host.</span>
+        </div>
+        <label class="switch">
+          <input id="bypasscsp" type="checkbox">
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Basic Authentication (HTTPS Only) -->
+    <section class="card" id="authCard">
+      <div class="card-header">
+        <h2 class="card-title">HTTP Basic Authentication</h2>
+      </div>
+      <p class="card-desc" id="authDesc">Optional credentials for servers protected with Basic Auth (only transmitted over HTTPS for security).</p>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="targetuser" class="form-label">Username</label>
+          <input id="targetuser" class="input-text" type="text" placeholder="Username (optional)">
+        </div>
+
+        <div class="form-group">
+          <label for="targetpasswd" class="form-label">Password</label>
+          <div class="password-wrap">
+            <input id="targetpasswd" class="input-text" type="password" placeholder="••••••••" minlength="0" maxlength="128">
+            <button type="button" id="btnTogglePw" class="btn-toggle-pw" title="Show / Hide Password">👁️</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-buttons">
+        <button type="button" id="save" class="btn-primary">
+          <span>Save Settings</span>
+        </button>
+        <button type="button" id="btnReset" class="btn-secondary">Reset to Defaults</button>
+      </div>
+      <div id="status" class="status-toast"></div>
+    </div>
+
+    <!-- About & Help Details -->
+    <details>
+      <summary>How It Works & Troubleshooting</summary>
+      <div class="details-content">
+        <p><strong>How it works:</strong> Click'n'Load buttons on file sharing websites typically send requests to <code>http://127.0.0.1:9666</code>. This extension intercepts those calls and transparently redirects them to your configured target host, eliminating the need for an SSH port forward.</p>
+        
+        <div class="help-callout">
+          <strong>Mixed Content Warning:</strong> If the originating web page is loaded over HTTPS and your target is plain HTTP, browsers will block the active subresource as mixed content. To resolve this, configure HTTPS on your target host or allow insecure content for that site in your browser settings.
+        </div>
+
+        <p><strong>Source Code & Issues:</strong> Found a bug or need help? Visit the GitHub repository: <a href="https://github.com/pyload/Click-n-Load-Redirector" target="_blank" rel="noopener">pyload/Click-n-Load-Redirector</a>.</p>
+
+        <p><strong>Credits:</strong> Forked from <a href="https://github.com/werty1st/Redirect-Click-n-Load" target="_blank" rel="noopener">Redirect-Click-n-Load</a> by werty1st. Maintained by the pyLoad Team.</p>
+      </div>
+    </details>
+  </div>
 
   <script src="options.js"></script>
-
 </body>
 </html>

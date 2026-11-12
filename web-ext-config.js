@@ -7,6 +7,7 @@ export default {
     "yarn.lock",
     "web-ext-artifacts/**",
     "**/*.md",
+    "**/*.har",
     "screens/**",
     "screens",
     "scripts/**",
