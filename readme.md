@@ -40,11 +40,16 @@ Wait until page gets green
   2026-10-13
   * fixed issue where the target request `Host` header was not correctly rewritten
 
+### v1.0.3
+  * added option to bypass Content Security Policy (CSP) when redirecting Click'n'Load requests
+  * refactor settings page for better user experience
+
 ## Troubleshooting
 
 * check if plugin is enabled (not paused)
 * check if target is running and accessible
 * check options if target hostname is still set
+* check options if "Bypass Content Security Policy (CSP)" is enabled
 
 
 
